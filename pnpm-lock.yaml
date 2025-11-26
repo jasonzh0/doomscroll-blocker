@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      doomscroll-blocker:
-        specifier: 'file:'
-        version: 'file:'
     devDependencies:
       bestzip:
         specifier: ^2.2.1
@@ -394,9 +390,6 @@ packages:
   dir-glob@3.0.1:
     resolution: {integrity: sha512-WkrWp9GR4KXfKGYzOLmTuGVi1UWFfws377n9cc55/tb6DuqyF6pcQ5AbiHEshaDpY9v6oaSr2XCDidGmMwdzIA==}
     engines: {node: '>=8'}
-
-  'doomscroll-blocker@file:':
-    resolution: {directory: '', type: directory}
 
   electron-to-chromium@1.5.260:
     resolution: {integrity: sha512-ov8rBoOBhVawpzdre+Cmz4FB+y66Eqrk6Gwqd8NGxuhv99GQ8XqMAr351KEkOt7gukXWDg6gJWEMKgL2RLMPtA==}
@@ -1551,8 +1544,6 @@ snapshots:
   dir-glob@3.0.1:
     dependencies:
       path-type: 4.0.0
-
-  'doomscroll-blocker@file:': {}
 
   electron-to-chromium@1.5.260: {}
 
