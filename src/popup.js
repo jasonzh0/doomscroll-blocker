@@ -1,23 +1,103 @@
 /**
+ * Update the sites count badge
+ */
+function updateSitesCount(count) {
+  const sitesCount = document.getElementById('sitesCount');
+  if (sitesCount) {
+    sitesCount.textContent = count;
+    // Add a little bounce animation when count changes
+    sitesCount.style.animation = 'none';
+    setTimeout(() => {
+      sitesCount.style.animation = 'scaleIn 0.3s ease-out';
+    }, 10);
+  }
+}
+
+/**
  * Render the list of blocked sites in the popup UI
  * Fetches sites from storage and creates list items with remove buttons
  */
 function renderSiteList() {
   const siteList = document.getElementById('siteList');
-  siteList.innerHTML = '';
 
   chrome.storage.local.get(['blockedSites'], function (result) {
     const sites = result.blockedSites || [];
-    sites.forEach((site) => {
+
+    // Update count badge
+    updateSitesCount(sites.length);
+
+    // Clear the list
+    siteList.innerHTML = '';
+
+    // Show empty state if no sites
+    if (sites.length === 0) {
+      const emptyState = document.createElement('div');
+      emptyState.className = 'empty-state';
+      emptyState.innerHTML = `
+        <div class="empty-icon">📋</div>
+        <div>No sites blocked yet</div>
+      `;
+      siteList.appendChild(emptyState);
+      return;
+    }
+
+    // Render each site with staggered animation
+    sites.forEach((site, index) => {
       const li = document.createElement('li');
-      li.textContent = site;
+      li.style.animationDelay = `${index * 0.05}s`;
+
+      const siteName = document.createElement('span');
+      siteName.className = 'site-name';
+      siteName.textContent = site;
+
       const removeBtn = document.createElement('button');
-      removeBtn.textContent = 'Remove';
+      removeBtn.textContent = '✕ Remove';
       removeBtn.dataset.site = site;
+      removeBtn.setAttribute('aria-label', `Remove ${site}`);
+
+      li.appendChild(siteName);
       li.appendChild(removeBtn);
       siteList.appendChild(li);
     });
   });
+}
+
+/**
+ * Show a temporary success message
+ */
+function showSuccessMessage(message) {
+  const input = document.getElementById('siteInput');
+  const originalPlaceholder = input.placeholder;
+  input.placeholder = message;
+  input.style.borderColor = '#48bb78';
+  input.style.background = '#f0fff4';
+
+  setTimeout(() => {
+    input.placeholder = originalPlaceholder;
+    input.style.borderColor = '';
+    input.style.background = '';
+  }, 2000);
+}
+
+/**
+ * Show a temporary error message
+ */
+function showErrorMessage(message) {
+  const input = document.getElementById('siteInput');
+  const originalPlaceholder = input.placeholder;
+  input.placeholder = message;
+  input.style.borderColor = '#f56565';
+  input.style.background = '#fff5f5';
+
+  // Shake animation
+  input.style.animation = 'shake 0.5s ease-in-out';
+
+  setTimeout(() => {
+    input.placeholder = originalPlaceholder;
+    input.style.borderColor = '';
+    input.style.background = '';
+    input.style.animation = '';
+  }, 2000);
 }
 
 /**
@@ -26,38 +106,67 @@ function renderSiteList() {
 document.addEventListener('DOMContentLoaded', function () {
   const siteInput = document.getElementById('siteInput');
   const addSiteBtn = document.getElementById('addSiteBtn');
+  const siteList = document.getElementById('siteList');
   const closeButton = document.getElementById('closeButton');
+  const versionNumber = document.getElementById('versionNumber');
+
+  // Set version number
+  const manifest = chrome.runtime.getManifest();
+  if (versionNumber) {
+    versionNumber.textContent = manifest.version;
+  }
+
+  // Add shake animation to styles
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+      20%, 40%, 60%, 80% { transform: translateX(5px); }
+    }
+  `;
+  document.head.appendChild(style);
 
   renderSiteList();
 
+  // Add site on Enter key
+  siteInput.addEventListener('keypress', function (e) {
+    if (e.key === 'Enter') {
+      addSiteBtn.click();
+    }
+  });
+
   addSiteBtn.addEventListener('click', function () {
     const site = siteInput.value.trim().toLowerCase();
-    if (!site) return;
+    if (!site) {
+      showErrorMessage('Please enter a website URL');
+      return;
+    }
 
     if (
       !/^[a-z0-9.-]+\.[a-z]{2,}(\/[a-z0-9\-._~%!$&'()*+,;=:@/]*\*?)?$/i.test(
         site
       )
     ) {
-      alert(
-        'Please enter a valid domain (e.g., example.com or example.com/*)'
-      );
+      showErrorMessage('Invalid domain format');
       return;
     }
 
     chrome.storage.local.get(['blockedSites'], function (result) {
       const sites = result.blockedSites || [];
       if (sites.includes(site)) {
-        alert('This site is already blocked');
+        showErrorMessage('Site already blocked');
         return;
       }
       sites.push(site);
       chrome.storage.local.set({ blockedSites: sites }, function () {
         if (chrome.runtime.lastError) {
           console.error('Error saving site:', chrome.runtime.lastError);
+          showErrorMessage('Error saving site');
           return;
         }
         siteInput.value = '';
+        showSuccessMessage('✓ Site added successfully!');
         renderSiteList();
       });
     });
@@ -66,16 +175,24 @@ document.addEventListener('DOMContentLoaded', function () {
   siteList.addEventListener('click', function (e) {
     if (e.target.tagName === 'BUTTON') {
       const site = e.target.dataset.site;
-      chrome.storage.local.get(['blockedSites'], function (result) {
-        const sites = result.blockedSites.filter((s) => s !== site);
-        chrome.storage.local.set({ blockedSites: sites }, function () {
-          if (chrome.runtime.lastError) {
-            console.error('Error removing site:', chrome.runtime.lastError);
-            return;
-          }
-          renderSiteList();
+      const listItem = e.target.closest('li');
+
+      // Add removing animation
+      listItem.classList.add('removing');
+
+      // Wait for animation to complete before removing
+      setTimeout(() => {
+        chrome.storage.local.get(['blockedSites'], function (result) {
+          const sites = result.blockedSites.filter((s) => s !== site);
+          chrome.storage.local.set({ blockedSites: sites }, function () {
+            if (chrome.runtime.lastError) {
+              console.error('Error removing site:', chrome.runtime.lastError);
+              return;
+            }
+            renderSiteList();
+          });
         });
-      });
+      }, 300);
     }
   });
 

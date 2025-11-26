@@ -18,6 +18,12 @@
 
 ## Changelog
 
+### 0.4.0
+
+- Added support for YouTube Shorts blocking!
+- Added a help button
+- Various bug fixes and improvements
+
 ### 0.3.3
 
 - Allow specifying subdomains

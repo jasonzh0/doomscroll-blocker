@@ -1,101 +1,489 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Edit Blocked Sites</title>
-    <style>
-      body {
-        font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-        width: 320px;
-        padding: 16px;
-        margin: 0;
-        background-color: #f8f9fa;
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Doomscroll Blocker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      width: 380px;
+      min-height: 500px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #1a1a2e;
+      overflow-x: hidden;
+    }
+
+    .container {
+      padding: 24px;
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
       }
 
-      h3 {
-        margin: 0 0 16px 0;
-        color: #1a1a1a;
-        font-size: 18px;
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+      animation: slideDown 0.5s ease-out;
+      position: relative;
+    }
+
+    .help-container {
+      position: absolute;
+      top: 0;
+      right: 0;
+      z-index: 100;
+    }
+
+    .help-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: help;
+      transition: all 0.2s;
+    }
+
+    .help-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.1);
+    }
+
+    .help-tooltip {
+      position: absolute;
+      top: 30px;
+      right: 0;
+      width: 220px;
+      background: white;
+      color: #2d3748;
+      padding: 12px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+      font-size: 12px;
+      text-align: left;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(-10px);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+    }
+
+    .help-tooltip::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      right: 8px;
+      width: 12px;
+      height: 12px;
+      background: white;
+      transform: rotate(45deg);
+    }
+
+    .help-container:hover .help-tooltip {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+
+    .help-tooltip h3 {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #667eea;
+    }
+
+    .help-tooltip p {
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .help-tooltip p:last-child {
+      margin-bottom: 0;
+    }
+
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-20px);
       }
 
-      #siteInput {
-        width: 100%;
-        padding: 8px 12px;
-        margin-bottom: 12px;
-        border: 1px solid #dee2e6;
-        border-radius: 6px;
-        box-sizing: border-box;
-        font-size: 14px;
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .header-icon {
+      width: 56px;
+      height: 56px;
+      background: #1a1a2e;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 12px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      animation: pulse 2s ease-in-out infinite;
+      overflow: hidden;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        transform: scale(1);
+        box-shadow: 0 8px 16px rgba(245, 87, 108, 0.3);
       }
 
-      #siteInput:focus {
-        outline: none;
-        border-color: #2a9d8f;
-        box-shadow: 0 0 0 2px rgba(42, 157, 143, 0.2);
+      50% {
+        transform: scale(1.05);
+        box-shadow: 0 12px 24px rgba(245, 87, 108, 0.4);
+      }
+    }
+
+    h1 {
+      color: white;
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .subtitle {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 13px;
+      font-weight: 400;
+    }
+
+    .input-group {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      animation: scaleIn 0.4s ease-out 0.1s both;
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95);
       }
 
-      #siteList {
-        list-style-type: none;
-        padding: 0;
-        margin: 16px 0;
-        max-height: 200px;
-        overflow-y: auto;
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .input-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+
+    #siteInput {
+      width: 100%;
+      padding: 12px 16px;
+      margin-bottom: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      background: #f7fafc;
+    }
+
+    #siteInput:focus {
+      outline: none;
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-1px);
+    }
+
+    #siteInput::placeholder {
+      color: #a0aec0;
+    }
+
+    button {
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+
+    button:active::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    #addSiteBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      width: 100%;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #addSiteBtn:hover {
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.5);
+    }
+
+    .sites-container {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      animation: scaleIn 0.4s ease-out 0.2s both;
+    }
+
+    .sites-header {
+      font-size: 14px;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .sites-count {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    #siteList {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      max-height: 240px;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    #siteList::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    #siteList::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 10px;
+    }
+
+    #siteList::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 10px;
+    }
+
+    #siteList li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+      border-radius: 10px;
+      margin-bottom: 8px;
+      border: 1px solid #e2e8f0;
+      animation: slideInLeft 0.3s ease-out;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideInLeft {
+      from {
+        opacity: 0;
+        transform: translateX(-20px);
       }
 
-      #siteList li {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 8px 12px;
-        background: white;
-        border-radius: 6px;
-        margin-bottom: 8px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      to {
+        opacity: 1;
+        transform: translateX(0);
       }
+    }
 
-      button {
-        padding: 8px 16px;
-        border: none;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 14px;
-        font-weight: 500;
-        transition: all 0.2s ease;
-      }
+    #siteList li:hover {
+      transform: translateX(4px);
+      border-color: #cbd5e0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
 
-      button:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
+    #siteList li.removing {
+      animation: slideOutRight 0.3s ease-out forwards;
+    }
 
-      #addSiteBtn {
-        background-color: #2a9d8f;
-        color: white;
-        width: 100%;
+    @keyframes slideOutRight {
+      to {
+        opacity: 0;
+        transform: translateX(20px);
       }
+    }
 
-      #siteList li button {
-        background-color: #ef476f;
-        color: white;
-        padding: 4px 8px;
-        font-size: 12px;
-      }
+    .site-name {
+      font-size: 13px;
+      color: #2d3748;
+      font-weight: 500;
+      flex: 1;
+      word-break: break-all;
+    }
 
-      #closeButton {
-        background-color: #6c757d;
-        color: white;
-        width: 100%;
-        margin-top: 8px;
-      }
-    </style>
-  </head>
-  <body>
-    <h3>Blocked Sites</h3>
-    <input type="text" id="siteInput" placeholder="Enter website URL..." />
-    <button id="addSiteBtn">Add Site</button>
-    <ul id="siteList"></ul>
-    <button id="closeButton">Close</button>
+    #siteList li button {
+      background: linear-gradient(135deg, #fc5c7d 0%, #6a82fb 100%);
+      color: white;
+      padding: 6px 12px;
+      font-size: 12px;
+      box-shadow: 0 2px 8px rgba(252, 92, 125, 0.3);
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
+    #siteList li button:hover {
+      box-shadow: 0 4px 12px rgba(252, 92, 125, 0.4);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 32px 16px;
+      color: #718096;
+      font-size: 13px;
+    }
+
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+      opacity: 0.5;
+    }
+
+    #closeButton {
+      background: rgba(255, 255, 255, 0.2);
+      backdrop-filter: blur(10px);
+      color: white;
+      width: 100%;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      animation: scaleIn 0.4s ease-out 0.3s both;
+    }
+
+    #closeButton:hover {
+      background: rgba(255, 255, 255, 0.3);
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+
+    .version-footer {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.6);
+      font-weight: 500;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <div class="header">
+      <div class="help-container">
+        <div class="help-btn">?</div>
+        <div class="help-tooltip">
+          <h3>How it works</h3>
+          <p>Add websites you want to limit. The extension will track your scrolling.</p>
+          <p>When you doomscroll too much, a warning will appear to remind you to touch grass!</p>
+        </div>
+      </div>
+      <div class="header-icon">
+        <img src="icons/icon_128.png" alt="Logo" width="32" height="32"">
+      </div>
+      <h1>Doomscroll Blocker</h1>
+      <p class=" subtitle">Take control of your browsing</p>
+      </div>
+
+      <div class="input-group">
+        <label class="input-label">Add Website to Block</label>
+        <input type="text" id="siteInput" placeholder="e.g., example.com or example.com/*" autocomplete="off" />
+        <button id="addSiteBtn">
+          <span>+ Add Site</span>
+        </button>
+      </div>
+
+      <div class="sites-container">
+        <div class="sites-header">
+          <span>Blocked Sites</span>
+          <span class="sites-count" id="sitesCount">0</span>
+        </div>
+        <ul id="siteList">
+          <div class="empty-state">
+            <div class="empty-icon">📋</div>
+            <div>No sites blocked yet</div>
+          </div>
+        </ul>
+      </div>
+
+      <button id="closeButton">Close</button>
+
+      <div class="version-footer">
+        v<span id="versionNumber">...</span>
+      </div>
+    </div>
     <script src="popup.js"></script>
-  </body>
+</body>
+
 </html>
