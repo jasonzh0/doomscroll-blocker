@@ -89,6 +89,64 @@ function createWarningElement() {
 }
 
 /**
+ * Create a toggler that flips the warning opacity to produce the flashing effect.
+ * @param {HTMLDivElement} warningElement
+ * @returns {() => void}
+ */
+function createWarningFlasher(warningElement) {
+  let isVisible = false;
+  return () => {
+    warningElement.style.opacity = isVisible ? 0 : 1;
+    isVisible = !isVisible;
+  };
+}
+
+/**
+ * Apply the doomscroll warning animation sequence.
+ * @param {HTMLDivElement} warningElement
+ * @param {{FLASH_INTERVAL: number, SCREEN_DECAY_TIME: number}} config
+ */
+function startWarningAnimation(warningElement, config) {
+  document.body.insertAdjacentElement('afterbegin', warningElement);
+  const bodyChildren = Array.from(document.body.children);
+
+  for (const child of bodyChildren) {
+    if (child.id !== 'doomscroll') {
+      child.style.opacity = 1;
+      child.style.transitionProperty = 'opacity';
+      child.style.transitionDuration = config.SCREEN_DECAY_TIME + 's';
+    }
+  }
+
+  const toggleWarning = createWarningFlasher(warningElement);
+  const flashIntervalId = setInterval(toggleWarning, config.FLASH_INTERVAL);
+
+  for (const child of bodyChildren) {
+    if (child.id !== 'doomscroll') {
+      child.style.opacity = 0;
+    }
+  }
+
+  const timeoutId = setTimeout(() => {
+    document.body.innerHTML = '';
+
+    clearInterval(flashIntervalId);
+
+    document.body.appendChild(warningElement);
+    warningElement.style.opacity = 1;
+    warningElement.style.color = '#8ac926';
+    warningElement.style.fontFamily = 'sans-serif';
+
+    const warningText = warningElement.querySelector('div');
+    if (warningText) {
+      warningText.innerText = 'Touch some grass!';
+    }
+
+    clearTimeout(timeoutId);
+  }, config.SCREEN_DECAY_TIME * 1000);
+}
+
+/**
  * Initialize the doomscroll blocker for the current page
  * Sets up scroll tracking and warning display logic
  */
@@ -101,14 +159,12 @@ function initialSiteBlocker() {
    */
   const CONFIG = {
     SCROLL_LIMIT: 4000,
-    FLASH_INTERVAL: 400,
+    FLASH_INTERVAL: 700,
     SCREEN_DECAY_TIME: 7,
   };
 
   let scrollDistance = 0;
-  let isWarningVisible = false;
   let isWarningEnabled = false;
-  let flashIntervalId;
 
   const warningElement = createWarningElement();
 
@@ -119,56 +175,10 @@ function initialSiteBlocker() {
     const scrollDelta = document.documentElement.scrollTop - scrollDistance;
     scrollDistance = document.documentElement.scrollTop;
 
-    if (scrollDelta > 0) {
-      if (!isWarningEnabled && scrollDistance > CONFIG.SCROLL_LIMIT) {
-        isWarningEnabled = true;
-
-        document.body.insertAdjacentElement('afterbegin', warningElement);
-
-        const children = document.body.children;
-        for (const child of children) {
-          if (child.id !== 'doomscroll') {
-            child.style.opacity = 1;
-            child.style.transitionProperty = 'opacity';
-            child.style.transitionDuration = CONFIG.SCREEN_DECAY_TIME + 's';
-          }
-        }
-
-        flashIntervalId = setInterval(() => {
-          displayWarning();
-        }, CONFIG.FLASH_INTERVAL);
-
-        for (const child of children) {
-          if (child.id !== 'doomscroll') child.style.opacity = 0;
-        }
-
-        const t = setTimeout(() => {
-          document.body.innerHTML = '';
-
-          clearInterval(flashIntervalId);
-
-          document.body.appendChild(warningElement);
-          warningElement.style.opacity = 1;
-          warningElement.style.color = '#8ac926';
-          warningElement.style.fontFamily = 'sans-serif';
-          warningElement.querySelector('div').innerText = 'Touch some grass!';
-
-          clearTimeout(t);
-        }, CONFIG.SCREEN_DECAY_TIME * 1000);
-      }
+    if (scrollDelta > 0 && !isWarningEnabled && scrollDistance > CONFIG.SCROLL_LIMIT) {
+      isWarningEnabled = true;
+      startWarningAnimation(warningElement, CONFIG);
     }
-  };
-
-  /**
-   * Toggle warning visibility for flashing effect
-   */
-  const displayWarning = () => {
-    if (!isWarningVisible) {
-      warningElement.style.opacity = 1;
-    } else {
-      warningElement.style.opacity = 0;
-    }
-    isWarningVisible = !isWarningVisible;
   };
 
   window.addEventListener('scroll', handleScroll);
@@ -188,14 +198,12 @@ function initializeShortsBlocker() {
    */
   const CONFIG = {
     SHORTS_LIMIT: 10,
-    FLASH_INTERVAL: 400,
+    FLASH_INTERVAL: 1000,
     SCREEN_DECAY_TIME: 7,
   };
 
   let shortsViewed = 0;
   let isWarningEnabled = false;
-  let isWarningVisible = false;
-  let flashIntervalId;
   let currentVideoId = null;
 
   const warningElement = createWarningElement();
@@ -224,51 +232,7 @@ function initializeShortsBlocker() {
    */
   const triggerWarning = () => {
     isWarningEnabled = true;
-
-    document.body.insertAdjacentElement('afterbegin', warningElement);
-
-    const children = document.body.children;
-    for (const child of children) {
-      if (child.id !== 'doomscroll') {
-        child.style.opacity = 1;
-        child.style.transitionProperty = 'opacity';
-        child.style.transitionDuration = CONFIG.SCREEN_DECAY_TIME + 's';
-      }
-    }
-
-    flashIntervalId = setInterval(() => {
-      displayWarning();
-    }, CONFIG.FLASH_INTERVAL);
-
-    for (const child of children) {
-      if (child.id !== 'doomscroll') child.style.opacity = 0;
-    }
-
-    const t = setTimeout(() => {
-      document.body.innerHTML = '';
-
-      clearInterval(flashIntervalId);
-
-      document.body.appendChild(warningElement);
-      warningElement.style.opacity = 1;
-      warningElement.style.color = '#8ac926';
-      warningElement.style.fontFamily = 'sans-serif';
-      warningElement.querySelector('div').innerText = 'Touch some grass!';
-
-      clearTimeout(t);
-    }, CONFIG.SCREEN_DECAY_TIME * 1000);
-  };
-
-  /**
-   * Toggle warning visibility for flashing effect
-   */
-  const displayWarning = () => {
-    if (!isWarningVisible) {
-      warningElement.style.opacity = 1;
-    } else {
-      warningElement.style.opacity = 0;
-    }
-    isWarningVisible = !isWarningVisible;
+    startWarningAnimation(warningElement, CONFIG);
   };
 
   // Track initial video
