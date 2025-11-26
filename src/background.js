@@ -1,3 +1,7 @@
+/**
+ * Default list of sites to block for doomscrolling prevention
+ * @type {string[]}
+ */
 const defaultSites = [
   'facebook.com',
   'twitter.com',
@@ -7,6 +11,10 @@ const defaultSites = [
   'youtube.com',
 ];
 
+/**
+ * Initialize blocked sites list on extension installation
+ * Sets default sites if no custom list exists
+ */
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(['blockedSites'], function (result) {
     if (!result.blockedSites) {
@@ -15,6 +23,10 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+/**
+ * Listen for tab updates and check if the loaded site should be blocked
+ * Sends message to content script when page finishes loading
+ */
 chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo, tab) {
   if (changeInfo.status === 'complete') {
     chrome.tabs.sendMessage(tabId, {

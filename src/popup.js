@@ -1,10 +1,13 @@
+/**
+ * Render the list of blocked sites in the popup UI
+ * Fetches sites from storage and creates list items with remove buttons
+ */
 function renderSiteList() {
   const siteList = document.getElementById('siteList');
   siteList.innerHTML = '';
 
   chrome.storage.local.get(['blockedSites'], function (result) {
     const sites = result.blockedSites || [];
-    console.log(sites);
     sites.forEach((site) => {
       const li = document.createElement('li');
       li.textContent = site;
@@ -17,6 +20,9 @@ function renderSiteList() {
   });
 }
 
+/**
+ * Initialize popup UI and set up event listeners
+ */
 document.addEventListener('DOMContentLoaded', function () {
   const siteInput = document.getElementById('siteInput');
   const addSiteBtn = document.getElementById('addSiteBtn');
