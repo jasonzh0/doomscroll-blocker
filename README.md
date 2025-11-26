@@ -21,8 +21,7 @@
 ### 0.4.1
 
 - Added a settings card so you can save custom scroll distance and YouTube Shorts limits.
-- Stored the thresholds in extension storage and listen with cleaner defaults on install.
-- Slowed down the warning flash and shared the animation helpers between regular and Shorts blockers.
+- Slowed down the warning flash.
 
 ### 0.4.0
 
