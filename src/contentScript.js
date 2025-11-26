@@ -1,49 +1,68 @@
+const DEFAULT_SCROLL_LIMIT = 4000;
+const DEFAULT_SHORTS_LIMIT = 10;
+const DEFAULT_FLASH_INTERVAL = 700;
+const DEFAULT_SCREEN_DECAY_TIME = 7;
+const isValidNumber = (value) => typeof value === 'number' && Number.isFinite(value);
+
 /**
  * Listen for messages from the background script to check if current site is blocked
  */
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'checkBlockedSite') {
-    chrome.storage.local.get(['blockedSites'], function (result) {
-      const blockedSites = result.blockedSites || [];
-      const href = window.location.href;
-      const pathname = window.location.pathname;
-      const isBlocked = blockedSites.some((site) => href.includes(site));
+    chrome.storage.local.get(
+      ['blockedSites', 'scrollLimit', 'shortsLimit'],
+      function (result) {
+        const blockedSites = result.blockedSites || [];
+        const scrollLimit = isValidNumber(result.scrollLimit)
+          ? result.scrollLimit
+          : DEFAULT_SCROLL_LIMIT;
+        const shortsLimit = isValidNumber(result.shortsLimit)
+          ? result.shortsLimit
+          : DEFAULT_SHORTS_LIMIT;
 
-      if (isBlocked) {
-        // Check if we're on YouTube Shorts
-        const isShortsPage = pathname.includes('/shorts/');
+        const scrollConfig = { scrollLimit };
+        const shortsConfig = { shortsLimit };
 
-        if (isShortsPage) {
-          // Only initialize once - check if already initialized
-          if (!initializeShortsBlocker.isInitialized) {
-            initializeShortsBlocker();
+        const href = window.location.href;
+        const pathname = window.location.pathname;
+        const isBlocked = blockedSites.some((site) => href.includes(site));
+
+        if (isBlocked) {
+          // Check if we're on YouTube Shorts
+          const isShortsPage = pathname.includes('/shorts/');
+
+          if (isShortsPage) {
+            // Only initialize once - check if already initialized
+            if (!initializeShortsBlocker.isInitialized) {
+              initializeShortsBlocker(shortsConfig);
+            }
+          } else {
+            // Clean up Shorts blocker if switching away from Shorts
+            if (initializeShortsBlocker.observer) {
+              initializeShortsBlocker.observer.disconnect();
+              initializeShortsBlocker.isInitialized = false;
+            }
+
+            initialSiteBlocker(scrollConfig);
           }
         } else {
-          // Clean up Shorts blocker if switching away from Shorts
+          // Clean up event listeners
+          if (initialSiteBlocker.scrollHandler) {
+            window.removeEventListener(
+              'scroll',
+              initialSiteBlocker.scrollHandler
+            );
+          }
           if (initializeShortsBlocker.observer) {
             initializeShortsBlocker.observer.disconnect();
             initializeShortsBlocker.isInitialized = false;
           }
+        }
 
-          initialSiteBlocker();
-        }
-      } else {
-        // Clean up event listeners
-        if (initialSiteBlocker.scrollHandler) {
-          window.removeEventListener(
-            'scroll',
-            initialSiteBlocker.scrollHandler
-          );
-        }
-        if (initializeShortsBlocker.observer) {
-          initializeShortsBlocker.observer.disconnect();
-          initializeShortsBlocker.isInitialized = false;
-        }
+        // Always send response to prevent channel closure error
+        sendResponse({ isBlocked });
       }
-
-      // Always send response to prevent channel closure error
-      sendResponse({ isBlocked });
-    });
+    );
     return true; // Indicates async response
   }
   return false; // Not handling this message
@@ -150,7 +169,7 @@ function startWarningAnimation(warningElement, config) {
  * Initialize the doomscroll blocker for the current page
  * Sets up scroll tracking and warning display logic
  */
-function initialSiteBlocker() {
+function initialSiteBlocker(config = {}) {
   /**
    * Configuration for doomscroll detection
    * @property {number} SCROLL_LIMIT - Pixels scrolled before triggering warning (4000px)
@@ -158,9 +177,15 @@ function initialSiteBlocker() {
    * @property {number} SCREEN_DECAY_TIME - Time in seconds for fade-out animation (7s)
    */
   const CONFIG = {
-    SCROLL_LIMIT: 4000,
-    FLASH_INTERVAL: 700,
-    SCREEN_DECAY_TIME: 7,
+    SCROLL_LIMIT: isValidNumber(config.scrollLimit)
+      ? config.scrollLimit
+      : DEFAULT_SCROLL_LIMIT,
+    FLASH_INTERVAL: isValidNumber(config.flashInterval)
+      ? config.flashInterval
+      : DEFAULT_FLASH_INTERVAL,
+    SCREEN_DECAY_TIME: isValidNumber(config.screenDecayTime)
+      ? config.screenDecayTime
+      : DEFAULT_SCREEN_DECAY_TIME,
   };
 
   let scrollDistance = 0;
@@ -189,7 +214,7 @@ function initialSiteBlocker() {
  * Initialize the doomscroll blocker for YouTube Shorts
  * Tracks video views instead of scroll distance
  */
-function initializeShortsBlocker() {
+function initializeShortsBlocker(config = {}) {
   /**
    * Configuration for YouTube Shorts detection
    * @property {number} SHORTS_LIMIT - Number of shorts before triggering warning (10 videos)
@@ -197,9 +222,15 @@ function initializeShortsBlocker() {
    * @property {number} SCREEN_DECAY_TIME - Time in seconds for fade-out animation (7s)
    */
   const CONFIG = {
-    SHORTS_LIMIT: 10,
-    FLASH_INTERVAL: 1000,
-    SCREEN_DECAY_TIME: 7,
+    SHORTS_LIMIT: isValidNumber(config.shortsLimit)
+      ? config.shortsLimit
+      : DEFAULT_SHORTS_LIMIT,
+    FLASH_INTERVAL: isValidNumber(config.flashInterval)
+      ? config.flashInterval
+      : DEFAULT_FLASH_INTERVAL,
+    SCREEN_DECAY_TIME: isValidNumber(config.screenDecayTime)
+      ? config.screenDecayTime
+      : DEFAULT_SCREEN_DECAY_TIME,
   };
 
   let shortsViewed = 0;

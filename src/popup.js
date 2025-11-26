@@ -1,3 +1,11 @@
+const DEFAULT_SCROLL_LIMIT = 4000;
+const DEFAULT_SHORTS_LIMIT = 10;
+const MIN_SCROLL_LIMIT = 100;
+const MIN_SHORTS_LIMIT = 1;
+
+const getStoredNumber = (value, fallback) =>
+  typeof value === 'number' && Number.isFinite(value) ? value : fallback;
+
 /**
  * Update the sites count badge
  */
@@ -109,6 +117,16 @@ document.addEventListener('DOMContentLoaded', function () {
   const siteList = document.getElementById('siteList');
   const closeButton = document.getElementById('closeButton');
   const versionNumber = document.getElementById('versionNumber');
+  const settingsToggle = document.getElementById('settingsToggle');
+  const settingsCard = document.querySelector('.settings-card');
+  const scrollLimitInput = document.getElementById('scrollLimitInput');
+  const shortsLimitInput = document.getElementById('shortsLimitInput');
+  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+  const settingsStatus = document.getElementById('settingsStatus');
+  const SETTINGS_OPEN_CLASS = 'is-open';
+  const SETTINGS_OPEN_TEXT = 'Hide settings';
+  const SETTINGS_CLOSED_TEXT = 'Settings';
+  let settingsStatusTimeout;
 
   // Set version number
   const manifest = chrome.runtime.getManifest();
@@ -128,6 +146,90 @@ document.addEventListener('DOMContentLoaded', function () {
   document.head.appendChild(style);
 
   renderSiteList();
+
+  const setSettingsStatus = (message, type) => {
+    if (!settingsStatus) return;
+    settingsStatus.textContent = message;
+    settingsStatus.className = 'settings-status';
+    if (type) settingsStatus.classList.add(type);
+    if (settingsStatusTimeout) {
+      clearTimeout(settingsStatusTimeout);
+    }
+    if (message) {
+      settingsStatusTimeout = setTimeout(() => {
+        settingsStatus.textContent = '';
+        settingsStatus.className = 'settings-status';
+      }, 3000);
+    }
+  };
+
+  const populateSettingsInputs = () => {
+    if (!scrollLimitInput || !shortsLimitInput) return;
+    chrome.storage.local.get(['scrollLimit', 'shortsLimit'], function (result) {
+      scrollLimitInput.value = getStoredNumber(result.scrollLimit, DEFAULT_SCROLL_LIMIT);
+      shortsLimitInput.value = getStoredNumber(result.shortsLimit, DEFAULT_SHORTS_LIMIT);
+    });
+  };
+
+  const toggleSettings = () => {
+    if (!settingsToggle || !settingsCard) return;
+    const willOpen = !settingsCard.classList.contains(SETTINGS_OPEN_CLASS);
+    if (willOpen) {
+      settingsCard.classList.add(SETTINGS_OPEN_CLASS);
+      settingsCard.setAttribute('aria-hidden', 'false');
+      settingsToggle.textContent = SETTINGS_OPEN_TEXT;
+      populateSettingsInputs();
+    } else {
+      settingsCard.classList.remove(SETTINGS_OPEN_CLASS);
+      settingsCard.setAttribute('aria-hidden', 'true');
+      settingsToggle.textContent = SETTINGS_CLOSED_TEXT;
+      setSettingsStatus('');
+    }
+  };
+
+  if (settingsToggle) {
+    settingsToggle.addEventListener('click', () => {
+      toggleSettings();
+    });
+    settingsToggle.textContent = SETTINGS_CLOSED_TEXT;
+  }
+
+  if (scrollLimitInput && shortsLimitInput) {
+    populateSettingsInputs();
+  }
+
+  if (saveSettingsBtn) {
+    saveSettingsBtn.addEventListener('click', () => {
+      if (!scrollLimitInput || !shortsLimitInput) return;
+      const scrollLimit = Number(scrollLimitInput.value);
+      const shortsLimit = Number(shortsLimitInput.value);
+
+      if (!Number.isFinite(scrollLimit) || scrollLimit < MIN_SCROLL_LIMIT) {
+        setSettingsStatus(`Scroll distance must be at least ${MIN_SCROLL_LIMIT} px`, 'error');
+        return;
+      }
+
+      if (!Number.isFinite(shortsLimit) || shortsLimit < MIN_SHORTS_LIMIT) {
+        setSettingsStatus(`Shorts limit must be at least ${MIN_SHORTS_LIMIT}`, 'error');
+        return;
+      }
+
+      chrome.storage.local.set(
+        {
+          scrollLimit,
+          shortsLimit,
+        },
+        function () {
+          if (chrome.runtime.lastError) {
+            console.error('Error saving thresholds:', chrome.runtime.lastError);
+            setSettingsStatus('Unable to save thresholds', 'error');
+            return;
+          }
+          setSettingsStatus('Thresholds saved', 'success');
+        }
+      );
+    });
+  }
 
   // Add site on Enter key
   siteInput.addEventListener('keypress', function (e) {
