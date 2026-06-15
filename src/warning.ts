@@ -72,6 +72,7 @@ function buildOverlay(): Overlay {
     text-align: center; padding: 8vw 6vw;
     background: radial-gradient(120% 95% at 50% 0%, #1a0b0c 0%, #0a0608 55%, #050406 100%);
     color: #ffe9e7; font-family: ${TECH_FONT};
+    word-break: normal; overflow-wrap: normal; white-space: normal;
     transition: opacity 0.3s ease, background 0.6s ease;
     overflow: hidden;
   `);
@@ -102,27 +103,30 @@ function buildOverlay(): Overlay {
   );
   corners.forEach((c) => root.appendChild(c));
 
+  // Wide content box; text-wrapping is reset with !important so a host page's
+  // global word-break/overflow-wrap rules can't squish the headline.
   const content = div(
-    'position: relative; max-width: 40ch; display: flex; flex-direction: column; align-items: center;'
+    'position: relative; width: 100%; max-width: 880px; display: flex; flex-direction: column; align-items: center; word-break: normal; overflow-wrap: normal;'
   );
 
   // Rotating targeting ring above the eyebrow.
   const ring = div(`
-    width: 46px; height: 46px; border-radius: 50%; margin-bottom: 20px;
+    width: 46px; height: 46px; border-radius: 50%; margin-bottom: 20px; flex-shrink: 0;
     border: 2px solid transparent; border-top-color: #ff4438; border-right-color: #ff4438;
     filter: drop-shadow(0 0 6px rgba(255,68,56,0.9));
   `);
   if (!reduced) ring.style.animation = 'ds-spin 2.6s linear infinite';
 
   const eyebrow = div(`
-    text-transform: uppercase; letter-spacing: 0.4em; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.4em; font-weight: 700; white-space: nowrap;
     font-size: clamp(0.72rem, 1.7vw, 0.95rem); color: #ff6a5e; margin-bottom: 1em; padding-left: 0.4em;
   `);
   eyebrow.textContent = '⚠ Threshold Exceeded';
 
   const headline = div(`
-    text-transform: uppercase; font-weight: 800;
-    font-size: clamp(2.6rem, 12vw, 8rem); line-height: 0.95; letter-spacing: 0.04em;
+    text-transform: uppercase; font-weight: 800; max-width: 100%;
+    font-size: clamp(2.6rem, 11vw, 7rem); line-height: 0.96; letter-spacing: 0.04em;
+    word-break: keep-all !important; overflow-wrap: normal !important; white-space: normal !important; hyphens: none !important;
     color: #ff4438; text-shadow: 0 0 32px rgba(255,68,56,0.65), 0 0 6px rgba(255,68,56,0.9);
   `);
   headline.textContent = 'Doomscroll';
@@ -130,8 +134,9 @@ function buildOverlay(): Overlay {
     headline.style.animation = 'ds-flicker 2.4s ease-in-out infinite';
 
   const sub = div(`
-    margin-top: 1.4em; font-size: clamp(0.95rem, 2.4vw, 1.4rem); font-weight: 500;
-    letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.5; color: rgba(255,233,231,0.66);
+    margin-top: 1.4em; max-width: 34ch; font-size: clamp(0.95rem, 2.4vw, 1.4rem); font-weight: 500;
+    letter-spacing: 0.16em; text-transform: uppercase; line-height: 1.5;
+    word-break: normal !important; overflow-wrap: normal !important; color: rgba(255,233,231,0.66);
   `);
   sub.textContent = 'Attention budget depleted // disengage';
 

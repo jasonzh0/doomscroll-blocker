@@ -37,6 +37,10 @@ Load the unpacked extension from `build/` via `chrome://extensions` (Developer m
 
 ## Changelog
 
+### 1.0.2
+
+- Fix the in-page warning overlay collapsing into a squished vertical column on sites with aggressive global text-wrapping CSS (e.g. Reddit, YouTube).
+
 ### 1.0.1
 
 - Refined the app icon to a circular arc-reactor badge (transparent corners).
