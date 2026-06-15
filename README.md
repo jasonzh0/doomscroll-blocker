@@ -105,4 +105,4 @@ Load the unpacked extension from `build/` via `chrome://extensions` (Developer m
 
 Suggestions and pull requests are welcomed!
 
-https://github.com/Zjjc123/doomscroll-blocker
+https://github.com/jasonzh0/doomscroll-blocker
