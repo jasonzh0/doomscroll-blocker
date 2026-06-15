@@ -2,13 +2,13 @@
 
 Paste these into the Developer Dashboard. Lengths are within Chrome's field limits.
 
-## Title (≤ 45 chars)
+## Title — set via manifest `name` (NOT editable in the dashboard; max 75 chars)
 
 ```
 Doomscroll Blocker — Stop the Infinite Scroll
 ```
 
-## Summary / short description (≤ 132 chars)
+## Summary — set via manifest `description` (NOT editable in the dashboard; max 132 chars)
 
 ```
 Set your own limit on doomscrolling and YouTube Shorts. Cross it and a full-screen reminder tells you to go touch grass.
