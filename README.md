@@ -1,4 +1,4 @@
-<h1><img src="public/icons/icon_48.png" width="42" align="left"> Doomscroll Blocker</h1>
+<h1><img src="store/logo.png" width="46" align="left"> Doomscroll Blocker</h1>
 
 > A Chrome extension that stops the spiral and helps you go touch grass — now with an Iron Man–inspired HUD.
 
