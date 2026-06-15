@@ -1,22 +1,54 @@
-# <img src="public/icons/icon_48.png" width="45" align="left"> Doomscroll Blocker
+<h1><img src="public/icons/icon_48.png" width="42" align="left"> Doomscroll Blocker</h1>
 
-> A chrome extension to block doom scrolling and help you touch grass!
+> A Chrome extension that stops the spiral and helps you go touch grass — now with an Iron Man–inspired HUD.
 
 ## Features
 
-- Doomscroll Detection and Blocking
-- Customizable Blocked Sites
-- Beautiful Colors and Animations
-- Motivational Messages After Doomscroll
+- **Scroll & Shorts limits** — warns you once you scroll too far on a site, or watch too many YouTube Shorts.
+- **Block any site** — keep your own monitored list; defaults include the usual time-sinks.
+- **Live settings** — changes apply to open tabs instantly, no reload needed.
+- **Heads-up intervention** — a full-screen alert that fades the page out, then sends you off to touch grass.
+- **Private by design** — only the `storage` permission, no tracking, no servers, no remote code, self-hosted fonts.
 
 ## Screenshots
 
 <p align="center">
-  <img src="./store/screenshot.png" alt="Doomscroll Blocker Screenshot" width="600">
-  <img src="./store/ui.png" alt="Doomscroll Blocker UI" width="600">
+  <img src="./store/screenshot-popup.png" alt="Doomscroll Blocker popup" width="640"><br>
+  <img src="./store/screenshot-alert.png" alt="Doomscroll alert" width="420">
+  <img src="./store/screenshot-touch-grass.png" alt="Touch grass directive" width="420">
 </p>
 
+## Development
+
+Built with **TypeScript** + **esbuild** (no framework).
+
+```bash
+pnpm install
+pnpm build       # typecheck, bundle to build/, and zip to dist/build.zip
+pnpm watch       # rebuild on change (reload the unpacked extension manually)
+pnpm typecheck   # tsc --noEmit
+```
+
+Load the unpacked extension from `build/` via `chrome://extensions` (Developer mode → Load unpacked).
+
+- `src/` — TypeScript sources (`popup`, `contentScript`, `background`, plus shared `constants` / `types` / `warning`).
+- `public/` — static assets (`manifest.json`, `popup.html`, `fonts.css`, fonts, icons) copied verbatim to `build/`.
+- `scripts/build.mjs` — the esbuild build (3 entries → classic IIFE bundles).
+
 ## Changelog
+
+### 1.0.0
+
+- **Complete visual redesign** into a dark, Iron Man–style HUD: arc-reactor logo, holographic grid, neon-cyan controls, and a full-screen "threshold exceeded" alert that resolves into a calm "touch grass" directive.
+- **Rewritten in TypeScript** with strict type-checking.
+- **New build system** — replaced webpack with esbuild (sub-100ms builds, one dev dependency).
+- **Hardened for 2026 MV3 best practices:**
+  - Fixed a URL-matching bug where a blocked domain could match unrelated sites (now parses the hostname with subdomain awareness).
+  - Dropped the `tabs` permission — the extension now requests only `storage`.
+  - Content script self-initializes and reacts to setting changes live via `storage.onChanged` (no page reload).
+  - YouTube Shorts detection now uses the Navigation API (with a fallback).
+  - Self-hosted fonts (no third-party network requests) and an explicit Content Security Policy.
+- New arc-reactor app icon.
 
 ### 0.4.1
 
@@ -66,10 +98,6 @@
 
 ## Contribution
 
-Suggestions and pull requests are welcomed!.
+Suggestions and pull requests are welcomed!
 
 https://github.com/Zjjc123/doomscroll-blocker
-
----
-
-This project was bootstrapped with [Chrome Extension CLI](https://github.com/dutiyesh/chrome-extension-cli)
