@@ -37,6 +37,11 @@ Load the unpacked extension from `build/` via `chrome://extensions` (Developer m
 
 ## Changelog
 
+### 1.0.1
+
+- Refined the app icon to a circular arc-reactor badge (transparent corners).
+- Refreshed Chrome Web Store assets (icon, promo tiles) and added listing copy.
+
 ### 1.0.0
 
 - **Complete visual redesign** into a dark, Iron Man–style HUD: arc-reactor logo, holographic grid, neon-cyan controls, and a full-screen "threshold exceeded" alert that resolves into a calm "touch grass" directive.

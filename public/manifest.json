@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Doomscroll Blocker | Website Blocker",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "minimum_chrome_version": "120",
   "permissions": ["storage"],
   "description": "A chrome extension to block doom scrolling and help you touch grass! Limit screen time! Block social media!",
