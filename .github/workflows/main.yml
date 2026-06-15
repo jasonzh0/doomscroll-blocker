@@ -6,9 +6,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
+  publish:
     name: Publish Web Extension
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    env:
+      # True only when all Chrome Web Store credentials are configured as secrets.
+      HAS_CWS_CREDS: ${{ secrets.CLIENT_ID != '' && secrets.CLIENT_SECRET != '' && secrets.REFRESH_TOKEN != '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -17,13 +22,32 @@ jobs:
           version: 10
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24
           cache: 'pnpm'
+
       - name: Build
         run: |
           pnpm install --frozen-lockfile
           pnpm run build
-      - name: Upload & release
+
+      # Always keep the build downloadable, even without store credentials.
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-${{ github.ref_name }}
+          path: dist/build.zip
+
+      - name: Attach build to release
+        if: ${{ github.event_name == 'release' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/build.zip
+
+      # Only attempt the store upload when creds exist, and never let it fail
+      # the run (the build + release asset are the important outputs).
+      - name: Upload to Chrome Web Store
+        if: ${{ env.HAS_CWS_CREDS == 'true' }}
+        continue-on-error: true
         uses: mnao305/chrome-extension-upload@v5.0.0
         with:
           file-path: dist/build.zip
@@ -32,3 +56,7 @@ jobs:
           client-secret: ${{ secrets.CLIENT_SECRET }}
           refresh-token: ${{ secrets.REFRESH_TOKEN }}
           publish: false
+
+      - name: Store upload skipped
+        if: ${{ env.HAS_CWS_CREDS != 'true' }}
+        run: echo "::notice::Chrome Web Store credentials not set — skipped upload. Add CLIENT_ID, CLIENT_SECRET, REFRESH_TOKEN repo secrets to enable it. The built zip is attached to the release / run artifacts."
