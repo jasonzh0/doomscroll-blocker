@@ -24,6 +24,7 @@ export const DEFAULT_SITES: readonly string[] = [
   'reddit.com',
   'x.com',
   'youtube.com',
+  'linkedin.com',
 ];
 
 /** Accepts a bare domain or a domain with an optional path / trailing wildcard. */

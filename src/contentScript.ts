@@ -22,7 +22,7 @@ const TIMING: WarningConfig = {
 let scrollLimit = DEFAULT_SCROLL_LIMIT;
 let shortsLimit = DEFAULT_SHORTS_LIMIT;
 
-let activeScrollHandler: (() => void) | null = null;
+let activeScrollHandler: ((event: Event) => void) | null = null;
 let shortsCleanup: (() => void) | null = null;
 let shortsInitialized = false;
 
@@ -76,7 +76,7 @@ async function init(): Promise<void> {
 /** Stop tracking scroll distance, if a tracker is active. */
 function teardownScrollBlocker(): void {
   if (activeScrollHandler) {
-    window.removeEventListener('scroll', activeScrollHandler);
+    window.removeEventListener('scroll', activeScrollHandler, true);
     activeScrollHandler = null;
   }
 }
@@ -97,21 +97,43 @@ function initializeScrollBlocker(): void {
   // Replace any previous tracker so repeated evaluations can't stack listeners.
   teardownScrollBlocker();
 
-  let scrollDistance = 0;
+  // Accumulated downward scroll distance, summed across every scroll source.
+  // Sites like LinkedIn scroll an inner container rather than the document, so
+  // we can't rely on `document.documentElement.scrollTop`. Instead we track the
+  // last scrollTop per scrolling element and sum the positive deltas.
+  let totalScrolled = 0;
   let warned = false;
+  const lastTops = new WeakMap<EventTarget, number>();
 
-  const handleScroll = (): void => {
-    const top = document.documentElement.scrollTop;
-    const delta = top - scrollDistance;
-    scrollDistance = top;
+  const handleScroll = (event: Event): void => {
+    // `document`/`window` scroll events report on the scrolling element; an
+    // inner container reports on itself (event.target is that element).
+    const target = event.target;
+    const el =
+      target === document || target === window || !(target instanceof Element)
+        ? document.scrollingElement || document.documentElement
+        : target;
+    if (!el) return;
 
-    if (delta > 0 && !warned && scrollDistance > scrollLimit) {
+    const top = el.scrollTop;
+    const previous = lastTops.get(el) ?? 0;
+    lastTops.set(el, top);
+
+    const delta = top - previous;
+    if (delta > 0) totalScrolled += delta;
+
+    if (!warned && totalScrolled > scrollLimit) {
       warned = true;
       runDoomscrollWarning(TIMING);
     }
   };
 
-  window.addEventListener('scroll', handleScroll, { passive: true });
+  // Capture phase so we also catch scroll events from inner scroll containers
+  // (scroll events don't bubble, but they do propagate during capture).
+  window.addEventListener('scroll', handleScroll, {
+    passive: true,
+    capture: true,
+  });
   activeScrollHandler = handleScroll;
 }
 

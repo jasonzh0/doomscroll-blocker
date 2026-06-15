@@ -42,6 +42,7 @@ const div = (cssText: string): HTMLDivElement => {
 interface Overlay {
   root: HTMLDivElement;
   grid: HTMLDivElement;
+  scan: HTMLDivElement;
   ring: HTMLDivElement;
   eyebrow: HTMLDivElement;
   headline: HTMLDivElement;
@@ -146,7 +147,7 @@ function buildOverlay(): Overlay {
   if (!reduced)
     content.style.animation = 'ds-rise 0.55s cubic-bezier(0.22,1,0.36,1) both';
 
-  return { root, grid, ring, eyebrow, headline, sub, corners };
+  return { root, grid, scan, ring, eyebrow, headline, sub, corners };
 }
 
 /** Swap the alert into its calm cyan "directive: touch grass" resolution. */
@@ -157,6 +158,9 @@ function resolveToDirective(o: Overlay): void {
 
   o.grid.style.backgroundImage =
     'linear-gradient(rgba(67,212,245,0.12) 1px, transparent 1px), linear-gradient(90deg, rgba(67,212,245,0.12) 1px, transparent 1px)';
+
+  o.scan.style.background =
+    'linear-gradient(180deg, transparent, rgba(67,212,245,0.10))';
 
   o.ring.style.borderTopColor = '#43d4f5';
   o.ring.style.borderRightColor = '#43d4f5';

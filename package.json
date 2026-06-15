@@ -1,6 +1,6 @@
 {
   "name": "doomscroll-blocker",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A chrome extension to block doom scrolling and help you touch grass!",
   "private": true,
   "scripts": {

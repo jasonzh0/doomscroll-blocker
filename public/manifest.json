@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Doomscroll Blocker — Stop the Infinite Scroll",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "minimum_chrome_version": "120",
   "permissions": ["storage"],
   "description": "Set your own limit on doomscrolling and YouTube Shorts. Cross it and a full-screen reminder tells you to go touch grass.",
