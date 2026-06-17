@@ -3,7 +3,7 @@
  */
 
 /** Pixels of downward scroll allowed before the warning fires. */
-export const DEFAULT_SCROLL_LIMIT = 4000;
+export const DEFAULT_SCROLL_LIMIT = 8000;
 /** YouTube Shorts viewed before the warning fires. */
 export const DEFAULT_SHORTS_LIMIT = 10;
 /** Smallest scroll distance a user may configure. */
