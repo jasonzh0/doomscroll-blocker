@@ -97,13 +97,12 @@ function initializeScrollBlocker(): void {
   // Replace any previous tracker so repeated evaluations can't stack listeners.
   teardownScrollBlocker();
 
-  // Accumulated downward scroll distance, summed across every scroll source.
-  // Sites like LinkedIn scroll an inner container rather than the document, so
-  // we can't rely on `document.documentElement.scrollTop`. Instead we track the
-  // last scrollTop per scrolling element and sum the positive deltas.
-  let totalScrolled = 0;
+  // We warn based on how far *down* the user has gone, not total distance
+  // travelled — scrolling down, back up, then down again must not trigger
+  // early. Sites like LinkedIn scroll an inner container rather than the
+  // document, so we can't rely on `document.documentElement.scrollTop`;
+  // instead we watch the current scrollTop of whichever element scrolled.
   let warned = false;
-  const lastTops = new WeakMap<EventTarget, number>();
 
   const handleScroll = (event: Event): void => {
     // `document`/`window` scroll events report on the scrolling element; an
@@ -115,14 +114,7 @@ function initializeScrollBlocker(): void {
         : target;
     if (!el) return;
 
-    const top = el.scrollTop;
-    const previous = lastTops.get(el) ?? 0;
-    lastTops.set(el, top);
-
-    const delta = top - previous;
-    if (delta > 0) totalScrolled += delta;
-
-    if (!warned && totalScrolled > scrollLimit) {
+    if (!warned && el.scrollTop > scrollLimit) {
       warned = true;
       runDoomscrollWarning(TIMING);
     }
