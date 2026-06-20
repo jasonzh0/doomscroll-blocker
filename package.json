@@ -16,5 +16,13 @@
     "esbuild": "^0.28.1",
     "prettier": "^2.7.1",
     "typescript": "^6.0.3"
+  },
+  "pnpm": {
+    "overrides": {
+      "minimatch@3": "^3.1.5",
+      "minimatch@5": "^5.1.9",
+      "brace-expansion@1": "^1.1.15",
+      "brace-expansion@2": "^2.0.3"
+    }
   }
 }
