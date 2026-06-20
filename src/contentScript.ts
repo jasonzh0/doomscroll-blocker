@@ -43,6 +43,7 @@ async function init(): Promise<void> {
       'blockedSites',
       'scrollLimit',
       'shortsLimit',
+      'enabled',
     ])) as StoredState;
   } catch {
     return; // storage unavailable (e.g. context invalidated) — nothing to do
@@ -51,10 +52,12 @@ async function init(): Promise<void> {
   scrollLimit = getStoredNumber(state.scrollLimit, DEFAULT_SCROLL_LIMIT);
   shortsLimit = getStoredNumber(state.shortsLimit, DEFAULT_SHORTS_LIMIT);
 
-  const isBlocked = matchesBlocklist(
-    window.location.href,
-    state.blockedSites ?? []
-  );
+  // Master switch: when explicitly disabled, do nothing on any page. Treat an
+  // unset value as enabled so existing installs keep working before they ever
+  // touch the toggle.
+  const isBlocked =
+    state.enabled !== false &&
+    matchesBlocklist(window.location.href, state.blockedSites ?? []);
 
   if (!isBlocked) {
     teardownScrollBlocker();
@@ -202,10 +205,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
       DEFAULT_SHORTS_LIMIT
     );
   }
-  // Only the blocklist changing can flip whether this page is blocked, so only
-  // then do we re-evaluate setup/teardown (threshold edits apply live above
-  // without resetting any running counter).
-  if (changes.blockedSites) {
+  // The blocklist or the master switch flipping can change whether this page is
+  // blocked, so re-evaluate setup/teardown for either (threshold edits apply
+  // live above without resetting any running counter).
+  if (changes.blockedSites || changes.enabled) {
     void init();
   }
 });

@@ -7,6 +7,8 @@ export interface StoredState {
   blockedSites?: string[];
   scrollLimit?: number;
   shortsLimit?: number;
+  /** Master switch. When `false`, the extension does no blocking at all. */
+  enabled?: boolean;
 }
 
 /** Timing shared by every warning animation. */

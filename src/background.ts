@@ -20,6 +20,7 @@ chrome.runtime.onInstalled.addListener(async () => {
       'blockedSites',
       'scrollLimit',
       'shortsLimit',
+      'enabled',
     ])) as StoredState;
 
     const updates: StoredState = {};
@@ -31,6 +32,9 @@ chrome.runtime.onInstalled.addListener(async () => {
     }
     if (!isValidNumber(result.shortsLimit)) {
       updates.shortsLimit = DEFAULT_SHORTS_LIMIT;
+    }
+    if (typeof result.enabled !== 'boolean') {
+      updates.enabled = true;
     }
 
     if (Object.keys(updates).length > 0) {

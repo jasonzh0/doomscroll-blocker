@@ -126,6 +126,10 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLInputElement | null;
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const settingsStatus = document.getElementById('settingsStatus');
+  const enabledToggle = document.getElementById('enabledToggle');
+  const powerHint = document.getElementById('powerHint');
+  const systemStatus = document.getElementById('systemStatus');
+  const systemStatusText = document.getElementById('systemStatusText');
 
   const SETTINGS_OPEN_CLASS = 'is-open';
   const SETTINGS_OPEN_TEXT = 'Hide settings';
@@ -142,6 +146,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   void renderSiteList();
+
+  /** Reflect the master on/off state across the toggle and header indicator. */
+  const reflectEnabledState = (enabled: boolean): void => {
+    if (enabledToggle) {
+      enabledToggle.setAttribute('aria-checked', String(enabled));
+    }
+    if (powerHint) {
+      powerHint.textContent = enabled ? 'Monitoring active' : 'Monitoring paused';
+      powerHint.classList.toggle('is-off', !enabled);
+    }
+    if (systemStatus) {
+      systemStatus.classList.toggle('is-offline', !enabled);
+    }
+    if (systemStatusText) {
+      systemStatusText.textContent = enabled ? 'System Online' : 'System Offline';
+    }
+  };
+
+  const loadEnabledState = async (): Promise<void> => {
+    let result: StoredState;
+    try {
+      result = (await chrome.storage.local.get(['enabled'])) as StoredState;
+    } catch {
+      return;
+    }
+    // Unset is treated as enabled (matches the content script's default).
+    reflectEnabledState(result.enabled !== false);
+  };
+
+  void loadEnabledState();
+
+  if (enabledToggle) {
+    enabledToggle.addEventListener('click', async () => {
+      const enabled = enabledToggle.getAttribute('aria-checked') !== 'true';
+      // Optimistically reflect, then persist.
+      reflectEnabledState(enabled);
+      try {
+        await chrome.storage.local.set({ enabled });
+      } catch (error) {
+        console.error('Error saving power state:', error);
+        reflectEnabledState(!enabled); // revert on failure
+      }
+    });
+  }
 
   const setSettingsStatus = (message: string, kind?: StatusKind): void => {
     if (!settingsStatus) return;
