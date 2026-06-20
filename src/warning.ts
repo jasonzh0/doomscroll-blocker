@@ -8,6 +8,7 @@
  * falls back to a technical system font stack when Orbitron/Rajdhani aren't
  * present on the host page.
  */
+import { DEFAULT_WARNING_MESSAGE } from './constants';
 import type { WarningConfig } from './types';
 
 const OVERLAY_ID = 'doomscroll';
@@ -151,7 +152,7 @@ function buildOverlay(): Overlay {
 }
 
 /** Swap the alert into its calm cyan "directive: touch grass" resolution. */
-function resolveToDirective(o: Overlay): void {
+function resolveToDirective(o: Overlay, message: string): void {
   o.root.style.background =
     'radial-gradient(120% 95% at 50% 0%, #07212b 0%, #061018 55%, #04080d 100%)';
   o.root.style.color = '#dff6fd';
@@ -173,7 +174,7 @@ function resolveToDirective(o: Overlay): void {
   o.headline.style.textShadow =
     '0 0 34px rgba(67,212,245,0.6), 0 0 6px rgba(67,212,245,0.85)';
   o.headline.style.animation = '';
-  o.headline.textContent = 'Touch Grass';
+  o.headline.textContent = message;
 
   o.sub.style.color = 'rgba(223,246,253,0.7)';
   o.sub.textContent = 'Disconnect // real light awaits';
@@ -188,7 +189,10 @@ function resolveToDirective(o: Overlay): void {
  * Run the warning sequence: fade the page out behind a flashing red alert, then
  * replace the page with the calm cyan "touch grass" directive.
  */
-export function runDoomscrollWarning(timing: WarningConfig): void {
+export function runDoomscrollWarning(
+  timing: WarningConfig,
+  message: string = DEFAULT_WARNING_MESSAGE
+): void {
   ensureKeyframes();
   const overlay = buildOverlay();
   const { root } = overlay;
@@ -222,6 +226,6 @@ export function runDoomscrollWarning(timing: WarningConfig): void {
     document.body.innerHTML = '';
     document.body.appendChild(root);
     root.style.opacity = '1';
-    resolveToDirective(overlay);
+    resolveToDirective(overlay, message);
   }, timing.screenDecayTime * 1000);
 }

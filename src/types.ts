@@ -9,6 +9,8 @@ export interface StoredState {
   shortsLimit?: number;
   /** Master switch. When `false`, the extension does no blocking at all. */
   enabled?: boolean;
+  /** Custom directive headline shown when the warning resolves. */
+  warningMessage?: string;
 }
 
 /** Timing shared by every warning animation. */

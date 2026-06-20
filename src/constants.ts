@@ -16,6 +16,18 @@ export const DEFAULT_FLASH_INTERVAL = 700;
 /** Time, in seconds, for the page to fade out behind the warning. */
 export const DEFAULT_SCREEN_DECAY_TIME = 7;
 
+/** The directive headline shown when the warning resolves. User-customizable. */
+export const DEFAULT_WARNING_MESSAGE = 'Touch Grass';
+/** Longest custom warning message a user may configure. */
+export const MAX_WARNING_MESSAGE_LENGTH = 40;
+
+/** Trim a stored warning message, falling back to the default when empty. */
+export const getStoredMessage = (value: unknown, fallback: string): string => {
+  if (typeof value !== 'string') return fallback;
+  const trimmed = value.trim().slice(0, MAX_WARNING_MESSAGE_LENGTH);
+  return trimmed || fallback;
+};
+
 /** Sites blocked out of the box on first install. */
 export const DEFAULT_SITES: readonly string[] = [
   'facebook.com',

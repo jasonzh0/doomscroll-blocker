@@ -1,9 +1,12 @@
 import {
   DEFAULT_SCROLL_LIMIT,
   DEFAULT_SHORTS_LIMIT,
+  DEFAULT_WARNING_MESSAGE,
+  MAX_WARNING_MESSAGE_LENGTH,
   MIN_SCROLL_LIMIT,
   MIN_SHORTS_LIMIT,
   SITE_PATTERN,
+  getStoredMessage,
   getStoredNumber,
 } from './constants';
 import type { StoredState } from './types';
@@ -124,6 +127,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const shortsLimitInput = document.getElementById(
     'shortsLimitInput'
   ) as HTMLInputElement | null;
+  const warningMessageInput = document.getElementById(
+    'warningMessageInput'
+  ) as HTMLInputElement | null;
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const settingsStatus = document.getElementById('settingsStatus');
   const enabledToggle = document.getElementById('enabledToggle');
@@ -215,6 +221,7 @@ document.addEventListener('DOMContentLoaded', () => {
       result = (await chrome.storage.local.get([
         'scrollLimit',
         'shortsLimit',
+        'warningMessage',
       ])) as StoredState;
     } catch {
       return;
@@ -225,6 +232,12 @@ document.addEventListener('DOMContentLoaded', () => {
     shortsLimitInput.value = String(
       getStoredNumber(result.shortsLimit, DEFAULT_SHORTS_LIMIT)
     );
+    if (warningMessageInput) {
+      warningMessageInput.value = getStoredMessage(
+        result.warningMessage,
+        DEFAULT_WARNING_MESSAGE
+      );
+    }
   };
 
   const toggleSettings = (): void => {
@@ -275,8 +288,17 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
       }
 
+      // Empty message is allowed — it falls back to the default at warn time.
+      const warningMessage = (warningMessageInput?.value ?? '')
+        .trim()
+        .slice(0, MAX_WARNING_MESSAGE_LENGTH);
+
       try {
-        await chrome.storage.local.set({ scrollLimit, shortsLimit });
+        await chrome.storage.local.set({
+          scrollLimit,
+          shortsLimit,
+          warningMessage,
+        });
         setSettingsStatus('Thresholds locked in', 'success');
       } catch (error) {
         console.error('Error saving thresholds:', error);

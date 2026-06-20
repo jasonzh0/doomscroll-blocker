@@ -3,6 +3,8 @@ import {
   DEFAULT_SCREEN_DECAY_TIME,
   DEFAULT_SCROLL_LIMIT,
   DEFAULT_SHORTS_LIMIT,
+  DEFAULT_WARNING_MESSAGE,
+  getStoredMessage,
   getStoredNumber,
   matchesBlocklist,
 } from './constants';
@@ -21,6 +23,7 @@ const TIMING: WarningConfig = {
 // immediately to a running tab without resetting any in-progress count.
 let scrollLimit = DEFAULT_SCROLL_LIMIT;
 let shortsLimit = DEFAULT_SHORTS_LIMIT;
+let warningMessage = DEFAULT_WARNING_MESSAGE;
 
 let activeScrollHandler: ((event: Event) => void) | null = null;
 let shortsCleanup: (() => void) | null = null;
@@ -44,6 +47,7 @@ async function init(): Promise<void> {
       'scrollLimit',
       'shortsLimit',
       'enabled',
+      'warningMessage',
     ])) as StoredState;
   } catch {
     return; // storage unavailable (e.g. context invalidated) — nothing to do
@@ -51,6 +55,10 @@ async function init(): Promise<void> {
 
   scrollLimit = getStoredNumber(state.scrollLimit, DEFAULT_SCROLL_LIMIT);
   shortsLimit = getStoredNumber(state.shortsLimit, DEFAULT_SHORTS_LIMIT);
+  warningMessage = getStoredMessage(
+    state.warningMessage,
+    DEFAULT_WARNING_MESSAGE
+  );
 
   // Master switch: when explicitly disabled, do nothing on any page. Treat an
   // unset value as enabled so existing installs keep working before they ever
@@ -119,7 +127,7 @@ function initializeScrollBlocker(): void {
 
     if (!warned && el.scrollTop > scrollLimit) {
       warned = true;
-      runDoomscrollWarning(TIMING);
+      runDoomscrollWarning(TIMING, warningMessage);
     }
   };
 
@@ -152,7 +160,7 @@ function initializeShortsBlocker(): void {
 
       if (!warned && shortsViewed >= shortsLimit) {
         warned = true;
-        runDoomscrollWarning(TIMING);
+        runDoomscrollWarning(TIMING, warningMessage);
       }
     }
   };
@@ -203,6 +211,12 @@ chrome.storage.onChanged.addListener((changes, area) => {
     shortsLimit = getStoredNumber(
       changes.shortsLimit.newValue,
       DEFAULT_SHORTS_LIMIT
+    );
+  }
+  if (changes.warningMessage) {
+    warningMessage = getStoredMessage(
+      changes.warningMessage.newValue,
+      DEFAULT_WARNING_MESSAGE
     );
   }
   // The blocklist or the master switch flipping can change whether this page is
