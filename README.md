@@ -37,6 +37,29 @@ Load the unpacked extension from `build/` via `chrome://extensions` (Developer m
 
 ## Changelog
 
+### 1.0.7
+
+- **Customizable alert message** — set your own directive headline (e.g. "Touch Grass") in settings; it applies live to open tabs.
+- Release pipeline now triggers on version-tag pushes and auto-creates the GitHub Release with the built `.zip` attached.
+
+### 1.0.6
+
+- **Master on/off switch** — a "System power" toggle in settings to pause all monitoring; the header indicator reflects Online/Offline state.
+- Patched ReDoS advisories in transitive dev dependencies (`minimatch`, `brace-expansion`) via pnpm overrides.
+
+### 1.0.5
+
+- Raised the default scroll threshold to 8000px.
+
+### 1.0.4
+
+- Warning now fires on how far down the page you are, not total distance scrolled — scrolling up and back down no longer triggers it early.
+
+### 1.0.3
+
+- Detect scrolling inside inner containers (e.g. LinkedIn's feed) so the warning fires on sites that don't scroll the document itself.
+- The resolved "directive" screen now uses a calm blue scanline.
+
 ### 1.0.2
 
 - Fix the in-page warning overlay collapsing into a squished vertical column on sites with aggressive global text-wrapping CSS (e.g. Reddit, YouTube).
