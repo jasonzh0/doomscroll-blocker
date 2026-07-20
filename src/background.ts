@@ -1,7 +1,10 @@
 import {
+  DEFAULT_ALERT_SOUND,
+  DEFAULT_EXCLUDED_SITES,
   DEFAULT_SCROLL_LIMIT,
   DEFAULT_SHORTS_LIMIT,
   DEFAULT_SITES,
+  getStoredAlertSound,
   isValidNumber,
 } from './constants';
 import type { StoredState } from './types';
@@ -18,14 +21,19 @@ chrome.runtime.onInstalled.addListener(async () => {
   try {
     const result = (await chrome.storage.local.get([
       'blockedSites',
+      'excludedSites',
       'scrollLimit',
       'shortsLimit',
       'enabled',
+      'alertSound',
     ])) as StoredState;
 
     const updates: StoredState = {};
     if (!result.blockedSites) {
       updates.blockedSites = [...DEFAULT_SITES];
+    }
+    if (!result.excludedSites) {
+      updates.excludedSites = [...DEFAULT_EXCLUDED_SITES];
     }
     if (!isValidNumber(result.scrollLimit)) {
       updates.scrollLimit = DEFAULT_SCROLL_LIMIT;
@@ -35,6 +43,9 @@ chrome.runtime.onInstalled.addListener(async () => {
     }
     if (typeof result.enabled !== 'boolean') {
       updates.enabled = true;
+    }
+    if (getStoredAlertSound(result.alertSound) !== result.alertSound) {
+      updates.alertSound = DEFAULT_ALERT_SOUND;
     }
 
     if (Object.keys(updates).length > 0) {

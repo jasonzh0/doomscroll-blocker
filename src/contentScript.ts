@@ -1,14 +1,16 @@
 import {
+  DEFAULT_ALERT_SOUND,
   DEFAULT_FLASH_INTERVAL,
   DEFAULT_SCREEN_DECAY_TIME,
   DEFAULT_SCROLL_LIMIT,
   DEFAULT_SHORTS_LIMIT,
   DEFAULT_WARNING_MESSAGE,
+  getStoredAlertSound,
   getStoredMessage,
   getStoredNumber,
   matchesBlocklist,
 } from './constants';
-import type { StoredState, WarningConfig } from './types';
+import type { AlertSound, StoredState, WarningConfig } from './types';
 import { runDoomscrollWarning } from './warning';
 
 /** Warning timing is fixed (not user-configurable today). */
@@ -24,6 +26,7 @@ const TIMING: WarningConfig = {
 let scrollLimit = DEFAULT_SCROLL_LIMIT;
 let shortsLimit = DEFAULT_SHORTS_LIMIT;
 let warningMessage = DEFAULT_WARNING_MESSAGE;
+let alertSound: AlertSound = DEFAULT_ALERT_SOUND;
 
 let activeScrollHandler: ((event: Event) => void) | null = null;
 let shortsCleanup: (() => void) | null = null;
@@ -44,10 +47,12 @@ async function init(): Promise<void> {
   try {
     state = (await chrome.storage.local.get([
       'blockedSites',
+      'excludedSites',
       'scrollLimit',
       'shortsLimit',
       'enabled',
       'warningMessage',
+      'alertSound',
     ])) as StoredState;
   } catch {
     return; // storage unavailable (e.g. context invalidated) — nothing to do
@@ -59,13 +64,18 @@ async function init(): Promise<void> {
     state.warningMessage,
     DEFAULT_WARNING_MESSAGE
   );
+  alertSound = getStoredAlertSound(state.alertSound);
 
   // Master switch: when explicitly disabled, do nothing on any page. Treat an
   // unset value as enabled so existing installs keep working before they ever
   // touch the toggle.
   const isBlocked =
     state.enabled !== false &&
-    matchesBlocklist(window.location.href, state.blockedSites ?? []);
+    matchesBlocklist(
+      window.location.href,
+      state.blockedSites ?? [],
+      state.excludedSites ?? []
+    );
 
   if (!isBlocked) {
     teardownScrollBlocker();
@@ -127,7 +137,7 @@ function initializeScrollBlocker(): void {
 
     if (!warned && el.scrollTop > scrollLimit) {
       warned = true;
-      runDoomscrollWarning(TIMING, warningMessage);
+      runDoomscrollWarning(TIMING, warningMessage, alertSound);
     }
   };
 
@@ -160,7 +170,7 @@ function initializeShortsBlocker(): void {
 
       if (!warned && shortsViewed >= shortsLimit) {
         warned = true;
-        runDoomscrollWarning(TIMING, warningMessage);
+        runDoomscrollWarning(TIMING, warningMessage, alertSound);
       }
     }
   };
@@ -219,10 +229,13 @@ chrome.storage.onChanged.addListener((changes, area) => {
       DEFAULT_WARNING_MESSAGE
     );
   }
+  if (changes.alertSound) {
+    alertSound = getStoredAlertSound(changes.alertSound.newValue);
+  }
   // The blocklist or the master switch flipping can change whether this page is
   // blocked, so re-evaluate setup/teardown for either (threshold edits apply
   // live above without resetting any running counter).
-  if (changes.blockedSites || changes.enabled) {
+  if (changes.blockedSites || changes.excludedSites || changes.enabled) {
     void init();
   }
 });

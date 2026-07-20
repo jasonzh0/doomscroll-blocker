@@ -5,7 +5,8 @@
 ## Features
 
 - **Scroll & Shorts limits** — warns you once you scroll too far on a site, or watch too many YouTube Shorts.
-- **Block any site** — keep your own monitored list; defaults include the usual time-sinks.
+- **Monitor or exclude any site** — keep your own monitored list and exempt specific subdomains or paths.
+- **Custom interventions** — choose the final alert message and an optional chime or alert pulse.
 - **Live settings** — changes apply to open tabs instantly, no reload needed.
 - **Heads-up intervention** — a full-screen alert that fades the page out, then sends you off to touch grass.
 - **Private by design** — only the `storage` permission, no tracking, no servers, no remote code, self-hosted fonts.
@@ -26,6 +27,7 @@ Built with **TypeScript** + **esbuild** (no framework).
 pnpm install
 pnpm build       # typecheck, bundle to build/, and zip to dist/build.zip
 pnpm watch       # rebuild on change (reload the unpacked extension manually)
+pnpm test        # URL matching and exclusion regression tests
 pnpm typecheck   # tsc --noEmit
 ```
 

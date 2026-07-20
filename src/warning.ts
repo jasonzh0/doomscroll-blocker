@@ -9,7 +9,7 @@
  * present on the host page.
  */
 import { DEFAULT_WARNING_MESSAGE } from './constants';
-import type { WarningConfig } from './types';
+import type { AlertSound, WarningConfig } from './types';
 
 const OVERLAY_ID = 'doomscroll';
 const STYLE_ID = 'doomscroll-style';
@@ -19,6 +19,43 @@ const TECH_FONT =
 const prefersReducedMotion = (): boolean =>
   typeof window.matchMedia === 'function' &&
   window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+/** Play a brief generated cue without loading media or requesting permission. */
+function playAlertSound(sound: AlertSound): void {
+  if (sound === 'none') return;
+
+  try {
+    const context = new AudioContext();
+    const oscillator = context.createOscillator();
+    const gain = context.createGain();
+    const start = context.currentTime + 0.02;
+
+    oscillator.connect(gain);
+    gain.connect(context.destination);
+    gain.gain.setValueAtTime(0.0001, start);
+    gain.gain.exponentialRampToValueAtTime(0.16, start + 0.025);
+
+    if (sound === 'chime') {
+      oscillator.type = 'sine';
+      oscillator.frequency.setValueAtTime(523.25, start);
+      oscillator.frequency.setValueAtTime(783.99, start + 0.13);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.42);
+      oscillator.stop(start + 0.43);
+    } else {
+      oscillator.type = 'square';
+      oscillator.frequency.setValueAtTime(196, start);
+      oscillator.frequency.exponentialRampToValueAtTime(130.81, start + 0.2);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.24);
+      oscillator.stop(start + 0.25);
+    }
+
+    oscillator.addEventListener('ended', () => void context.close());
+    oscillator.start(start);
+    void context.resume().catch(() => context.close());
+  } catch {
+    // Some browser/page policies can deny audio; the visual warning still runs.
+  }
+}
 
 /** Inject keyframes once; `ds-` prefixed to avoid host-page collisions. */
 function ensureKeyframes(): void {
@@ -191,8 +228,10 @@ function resolveToDirective(o: Overlay, message: string): void {
  */
 export function runDoomscrollWarning(
   timing: WarningConfig,
-  message: string = DEFAULT_WARNING_MESSAGE
+  message: string = DEFAULT_WARNING_MESSAGE,
+  sound: AlertSound = 'none'
 ): void {
+  playAlertSound(sound);
   ensureKeyframes();
   const overlay = buildOverlay();
   const { root } = overlay;

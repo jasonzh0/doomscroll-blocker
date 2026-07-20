@@ -497,7 +497,8 @@
       }
 
       input[type='text'],
-      input[type='number'] {
+      input[type='number'],
+      select {
         width: 100%;
         padding: 11px 14px;
         background: var(--field);
@@ -516,11 +517,27 @@
       }
 
       input[type='text']:focus,
-      input[type='number']:focus {
+      input[type='number']:focus,
+      select:focus {
         outline: none;
         border-color: rgba(95, 227, 255, 0.7);
         background: rgba(10, 22, 32, 0.92);
         box-shadow: 0 0 0 3px rgba(67, 212, 245, 0.12), var(--glow-cyan);
+      }
+
+      select {
+        appearance: none;
+        cursor: pointer;
+        background-image: linear-gradient(45deg, transparent 50%, var(--cyan) 50%),
+          linear-gradient(135deg, var(--cyan) 50%, transparent 50%);
+        background-position: calc(100% - 17px) 50%, calc(100% - 12px) 50%;
+        background-size: 5px 5px, 5px 5px;
+        background-repeat: no-repeat;
+      }
+
+      select option {
+        color: var(--text);
+        background: #0a1620;
       }
 
       input.is-success {
@@ -790,7 +807,8 @@
         font-variant-numeric: tabular-nums;
       }
 
-      #siteList {
+      #siteList,
+      #excludedSiteList {
         list-style: none;
         max-height: 220px;
         overflow-y: auto;
@@ -799,18 +817,22 @@
         padding: 0 3px;
       }
 
-      #siteList::-webkit-scrollbar {
+      #siteList::-webkit-scrollbar,
+      #excludedSiteList::-webkit-scrollbar {
         width: 5px;
       }
-      #siteList::-webkit-scrollbar-track {
+      #siteList::-webkit-scrollbar-track,
+      #excludedSiteList::-webkit-scrollbar-track {
         background: rgba(95, 227, 255, 0.05);
       }
-      #siteList::-webkit-scrollbar-thumb {
+      #siteList::-webkit-scrollbar-thumb,
+      #excludedSiteList::-webkit-scrollbar-thumb {
         background: rgba(95, 227, 255, 0.4);
         border-radius: 10px;
       }
 
-      #siteList li {
+      #siteList li,
+      #excludedSiteList li {
         display: flex;
         align-items: center;
         gap: 11px;
@@ -825,7 +847,8 @@
           border-color 0.22s var(--ease);
       }
 
-      #siteList li::before {
+      #siteList li::before,
+      #excludedSiteList li::before {
         content: '◢';
         color: var(--cyan);
         font-size: 9px;
@@ -834,14 +857,29 @@
         filter: drop-shadow(0 0 4px rgba(67, 212, 245, 0.7));
       }
 
-      #siteList li:hover {
+      #siteList li:hover,
+      #excludedSiteList li:hover {
         transform: translateX(3px);
         border-color: rgba(95, 227, 255, 0.45);
         box-shadow: var(--glow-cyan);
       }
 
-      #siteList li.removing {
+      #siteList li.removing,
+      #excludedSiteList li.removing {
         animation: slideOutRight 0.3s var(--ease) forwards;
+      }
+
+      #excludedSiteList {
+        max-height: 140px;
+      }
+
+      #excludedSiteList li {
+        border-left-color: var(--gold);
+      }
+
+      #excludedSiteList li::before {
+        color: var(--gold);
+        filter: drop-shadow(0 0 4px rgba(255, 182, 72, 0.65));
       }
 
       .site-name {
@@ -1040,8 +1078,16 @@
             spellcheck="false"
           />
         </div>
+        <div class="field">
+          <label class="label" for="alertSoundSelect">Alert sound</label>
+          <select id="alertSoundSelect">
+            <option value="none">Off</option>
+            <option value="chime">Chime</option>
+            <option value="pulse">Alert pulse</option>
+          </select>
+        </div>
         <button id="saveSettingsBtn" class="btn btn-gold" type="button">
-          Save thresholds
+          Save settings
         </button>
         <div id="settingsStatus" class="settings-status"></div>
       </div>
@@ -1069,6 +1115,29 @@
           <div class="empty-state">
             <div class="empty-icon">⌖</div>
             <div>No targets monitored — register a site to begin.</div>
+          </div>
+        </ul>
+      </div>
+
+      <div class="panel reveal d5">
+        <div class="sites-header">
+          <label class="label" for="excludedSiteInput">Sites to ignore</label>
+          <span class="sites-count" id="excludedSitesCount">0</span>
+        </div>
+        <input
+          type="text"
+          id="excludedSiteInput"
+          placeholder="e.g. music.youtube.com"
+          autocomplete="off"
+          spellcheck="false"
+        />
+        <button id="addExcludedSiteBtn" class="btn btn-gold" type="button">
+          Add exception
+        </button>
+        <ul id="excludedSiteList" aria-label="Excluded sites">
+          <div class="empty-state">
+            <div class="empty-icon">⌖</div>
+            <div>No exclusions — all monitored domains are active.</div>
           </div>
         </ul>
       </div>

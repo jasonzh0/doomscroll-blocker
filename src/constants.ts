@@ -1,6 +1,7 @@
 /**
  * Shared constants and small helpers for the Doomscroll Blocker extension.
  */
+import type { AlertSound } from './types';
 
 /** Pixels of downward scroll allowed before the warning fires. */
 export const DEFAULT_SCROLL_LIMIT = 8000;
@@ -20,6 +21,8 @@ export const DEFAULT_SCREEN_DECAY_TIME = 7;
 export const DEFAULT_WARNING_MESSAGE = 'Touch Grass';
 /** Longest custom warning message a user may configure. */
 export const MAX_WARNING_MESSAGE_LENGTH = 40;
+/** Sound played when a threshold is reached. */
+export const DEFAULT_ALERT_SOUND: AlertSound = 'none';
 
 /** Trim a stored warning message, falling back to the default when empty. */
 export const getStoredMessage = (value: unknown, fallback: string): string => {
@@ -27,6 +30,12 @@ export const getStoredMessage = (value: unknown, fallback: string): string => {
   const trimmed = value.trim().slice(0, MAX_WARNING_MESSAGE_LENGTH);
   return trimmed || fallback;
 };
+
+/** Return a supported alert sound, falling back for missing legacy settings. */
+export const getStoredAlertSound = (value: unknown): AlertSound =>
+  value === 'chime' || value === 'pulse' || value === 'none'
+    ? value
+    : DEFAULT_ALERT_SOUND;
 
 /** Sites blocked out of the box on first install. */
 export const DEFAULT_SITES: readonly string[] = [
@@ -38,6 +47,9 @@ export const DEFAULT_SITES: readonly string[] = [
   'youtube.com',
   'linkedin.com',
 ];
+
+/** Sites ignored even when a broader parent domain is monitored. */
+export const DEFAULT_EXCLUDED_SITES: readonly string[] = ['music.youtube.com'];
 
 /** Accepts a bare domain or a domain with an optional path / trailing wildcard. */
 export const SITE_PATTERN =
@@ -63,7 +75,8 @@ export const getStoredNumber = (value: unknown, fallback: number): number =>
  */
 export function matchesBlocklist(
   href: string,
-  patterns: readonly string[]
+  patterns: readonly string[],
+  excludedPatterns: readonly string[] = []
 ): boolean {
   let url: URL;
   try {
@@ -78,7 +91,7 @@ export function matchesBlocklist(
   const host = url.hostname.toLowerCase().replace(/^www\./, '');
   const path = url.pathname.toLowerCase();
 
-  return patterns.some((raw) => {
+  const matchesPattern = (raw: string): boolean => {
     const pattern = raw.trim().toLowerCase();
     if (!pattern) return false;
 
@@ -105,5 +118,9 @@ export function matchesBlocklist(
     // Path without a wildcard matches that path or anything beneath it.
     const boundary = want.endsWith('/') ? want : want + '/';
     return path === want || path.startsWith(boundary);
-  });
+  };
+
+  return (
+    patterns.some(matchesPattern) && !excludedPatterns.some(matchesPattern)
+  );
 }

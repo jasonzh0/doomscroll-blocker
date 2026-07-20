@@ -6,6 +6,7 @@ import {
   MIN_SCROLL_LIMIT,
   MIN_SHORTS_LIMIT,
   SITE_PATTERN,
+  getStoredAlertSound,
   getStoredMessage,
   getStoredNumber,
 } from './constants';
@@ -13,20 +14,20 @@ import type { StoredState } from './types';
 
 type StatusKind = 'success' | 'error';
 
-/** Update the monitored-sites count badge, with a small pop animation. */
-function updateSitesCount(count: number): void {
-  const sitesCount = document.getElementById('sitesCount');
-  if (!sitesCount) return;
+/** Update a sites count badge, with a small pop animation. */
+function updateSitesCount(elementId: string, count: number): void {
+  const countElement = document.getElementById(elementId);
+  if (!countElement) return;
 
-  sitesCount.textContent = String(count);
-  sitesCount.style.animation = 'none';
+  countElement.textContent = String(count);
+  countElement.style.animation = 'none';
   window.setTimeout(() => {
-    sitesCount.style.animation = 'countPop 0.3s ease-out';
+    countElement.style.animation = 'countPop 0.3s ease-out';
   }, 10);
 }
 
 /** Build the empty-state node using DOM APIs (no innerHTML). */
-function buildEmptyState(): HTMLElement {
+function buildEmptyState(messageText: string): HTMLElement {
   const wrap = document.createElement('div');
   wrap.className = 'empty-state';
 
@@ -35,7 +36,7 @@ function buildEmptyState(): HTMLElement {
   icon.textContent = '⌖';
 
   const message = document.createElement('div');
-  message.textContent = 'No targets monitored — register a site to begin.';
+  message.textContent = messageText;
 
   wrap.append(icon, message);
   return wrap;
@@ -74,11 +75,13 @@ async function renderSiteList(): Promise<void> {
   }
 
   const sites = result.blockedSites ?? [];
-  updateSitesCount(sites.length);
+  updateSitesCount('sitesCount', sites.length);
   siteList.replaceChildren();
 
   if (sites.length === 0) {
-    siteList.appendChild(buildEmptyState());
+    siteList.appendChild(
+      buildEmptyState('No targets monitored — register a site to begin.')
+    );
     return;
   }
 
@@ -87,9 +90,41 @@ async function renderSiteList(): Promise<void> {
   );
 }
 
+/** Render the sites that override broader monitored-domain matches. */
+async function renderExcludedSiteList(): Promise<void> {
+  const excludedSiteList = document.getElementById('excludedSiteList');
+  if (!excludedSiteList) return;
+
+  let result: StoredState;
+  try {
+    result = (await chrome.storage.local.get(['excludedSites'])) as StoredState;
+  } catch {
+    return;
+  }
+
+  const sites = result.excludedSites ?? [];
+  updateSitesCount('excludedSitesCount', sites.length);
+  excludedSiteList.replaceChildren();
+
+  if (sites.length === 0) {
+    excludedSiteList.appendChild(
+      buildEmptyState('No exclusions — all monitored domains are active.')
+    );
+    return;
+  }
+
+  sites.forEach((site, index) =>
+    excludedSiteList.appendChild(buildSiteRow(site, index))
+  );
+}
+
 /** Briefly recolor the site input to convey a transient message. */
-function flashSiteInput(message: string, kind: StatusKind): void {
-  const input = document.getElementById('siteInput') as HTMLInputElement | null;
+function flashSiteInput(
+  inputId: string,
+  message: string,
+  kind: StatusKind
+): void {
+  const input = document.getElementById(inputId) as HTMLInputElement | null;
   if (!input) return;
 
   const originalPlaceholder = input.placeholder;
@@ -107,9 +142,9 @@ function flashSiteInput(message: string, kind: StatusKind): void {
 }
 
 const showSuccessMessage = (message: string): void =>
-  flashSiteInput(message, 'success');
+  flashSiteInput('siteInput', message, 'success');
 const showErrorMessage = (message: string): void =>
-  flashSiteInput(message, 'error');
+  flashSiteInput('siteInput', message, 'error');
 
 document.addEventListener('DOMContentLoaded', () => {
   const siteInput = document.getElementById(
@@ -130,12 +165,20 @@ document.addEventListener('DOMContentLoaded', () => {
   const warningMessageInput = document.getElementById(
     'warningMessageInput'
   ) as HTMLInputElement | null;
+  const alertSoundSelect = document.getElementById(
+    'alertSoundSelect'
+  ) as HTMLSelectElement | null;
   const saveSettingsBtn = document.getElementById('saveSettingsBtn');
   const settingsStatus = document.getElementById('settingsStatus');
   const enabledToggle = document.getElementById('enabledToggle');
   const powerHint = document.getElementById('powerHint');
   const systemStatus = document.getElementById('systemStatus');
   const systemStatusText = document.getElementById('systemStatusText');
+  const excludedSiteInput = document.getElementById(
+    'excludedSiteInput'
+  ) as HTMLInputElement | null;
+  const addExcludedSiteBtn = document.getElementById('addExcludedSiteBtn');
+  const excludedSiteList = document.getElementById('excludedSiteList');
 
   const SETTINGS_OPEN_CLASS = 'is-open';
   const SETTINGS_OPEN_TEXT = 'Hide settings';
@@ -152,6 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   void renderSiteList();
+  void renderExcludedSiteList();
 
   /** Reflect the master on/off state across the toggle and header indicator. */
   const reflectEnabledState = (enabled: boolean): void => {
@@ -222,6 +266,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'scrollLimit',
         'shortsLimit',
         'warningMessage',
+        'alertSound',
       ])) as StoredState;
     } catch {
       return;
@@ -237,6 +282,9 @@ document.addEventListener('DOMContentLoaded', () => {
         result.warningMessage,
         DEFAULT_WARNING_MESSAGE
       );
+    }
+    if (alertSoundSelect) {
+      alertSoundSelect.value = getStoredAlertSound(result.alertSound);
     }
   };
 
@@ -292,14 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const warningMessage = (warningMessageInput?.value ?? '')
         .trim()
         .slice(0, MAX_WARNING_MESSAGE_LENGTH);
+      const alertSound = getStoredAlertSound(alertSoundSelect?.value);
 
       try {
         await chrome.storage.local.set({
           scrollLimit,
           shortsLimit,
           warningMessage,
+          alertSound,
         });
-        setSettingsStatus('Thresholds locked in', 'success');
+        setSettingsStatus('Settings locked in', 'success');
       } catch (error) {
         console.error('Error saving thresholds:', error);
         setSettingsStatus('Unable to save thresholds', 'error');
@@ -367,6 +417,69 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }, 300);
   });
+
+  if (excludedSiteInput && addExcludedSiteBtn && excludedSiteList) {
+    excludedSiteInput.addEventListener('keypress', (event) => {
+      if (event.key === 'Enter') {
+        addExcludedSiteBtn.click();
+      }
+    });
+
+    addExcludedSiteBtn.addEventListener('click', async () => {
+      const site = excludedSiteInput.value.trim().toLowerCase();
+      if (!site) {
+        flashSiteInput('excludedSiteInput', 'Enter a website URL', 'error');
+        return;
+      }
+      if (!SITE_PATTERN.test(site)) {
+        flashSiteInput('excludedSiteInput', 'Invalid domain format', 'error');
+        return;
+      }
+
+      try {
+        const result = (await chrome.storage.local.get([
+          'excludedSites',
+        ])) as StoredState;
+        const sites = result.excludedSites ?? [];
+        if (sites.includes(site)) {
+          flashSiteInput('excludedSiteInput', 'Site already excluded', 'error');
+          return;
+        }
+        sites.push(site);
+        await chrome.storage.local.set({ excludedSites: sites });
+        excludedSiteInput.value = '';
+        flashSiteInput('excludedSiteInput', 'Exception added', 'success');
+        void renderExcludedSiteList();
+      } catch (error) {
+        console.error('Error saving excluded site:', error);
+        flashSiteInput('excludedSiteInput', 'Error saving site', 'error');
+      }
+    });
+
+    excludedSiteList.addEventListener('click', (event) => {
+      const target = event.target as HTMLElement;
+      const button = target.closest('button');
+      if (!button || !excludedSiteList.contains(button)) return;
+
+      const site = button.dataset.site;
+      const listItem = button.closest('li');
+      if (!site || !listItem) return;
+
+      listItem.classList.add('removing');
+      window.setTimeout(async () => {
+        try {
+          const result = (await chrome.storage.local.get([
+            'excludedSites',
+          ])) as StoredState;
+          const sites = (result.excludedSites ?? []).filter((s) => s !== site);
+          await chrome.storage.local.set({ excludedSites: sites });
+          void renderExcludedSiteList();
+        } catch (error) {
+          console.error('Error removing excluded site:', error);
+        }
+      }, 300);
+    });
+  }
 
   closeButton.addEventListener('click', () => window.close());
 });

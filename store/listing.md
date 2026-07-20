@@ -23,8 +23,10 @@ You choose the sites that pull you in. The extension quietly watches how far you
 
 HOW IT WORKS
 • Add any site to your blocklist — social media, news, video, your call.
+• Exclude specific sites, subdomains, or paths even when their parent domain is monitored.
 • Set your own limits: a scroll distance, and a YouTube Shorts count.
-• Go past the limit and a "threshold exceeded" alert fades the page out, then resolves into a calm reminder to step away.
+• Customize the reminder message and choose an optional short alert sound.
+• Go past the limit and a "threshold exceeded" alert fades the page out, then resolves into your reminder to step away.
 
 WHY YOU'LL LIKE IT
 • You set the rules — no forced timers, no nagging.
@@ -56,13 +58,13 @@ Help users curb doomscrolling: on sites the user chooses to block, warn them wit
 **storage**
 
 ```
-Stores the user's blocklist and their scroll-distance and YouTube-Shorts limits in chrome.storage.local so their settings persist between sessions. This data stays on the device and is never transmitted.
+Stores the user's monitored and excluded sites, limits, alert message, and sound choice in chrome.storage.local so settings persist between sessions. This data stays on the device and is never transmitted.
 ```
 
 **Host permission (`<all_urls>` content script)**
 
 ```
-The blocklist is entirely user-defined, so the content script must be able to run on whichever sites the user adds. It only activates its scroll/Shorts tracking and the warning overlay on sites the user has explicitly added to their list; on every other site it does nothing. It reads only the page's own URL and scroll position, locally — no page content is collected, stored, or transmitted.
+The monitored and excluded site lists are user-controlled, so the content script must be able to run on whichever sites the user adds. It only activates its scroll/Shorts tracking and warning overlay on matching monitored sites that are not excluded; on every other site it does nothing. It reads only the page's own URL and scroll position, locally — no page content is collected, stored, or transmitted.
 ```
 
 ## Are you using remote code?

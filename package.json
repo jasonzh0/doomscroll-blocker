@@ -7,6 +7,7 @@
     "watch": "node scripts/build.mjs --watch",
     "build": "pnpm typecheck && node scripts/build.mjs && pnpm dist",
     "dist": "rm -rf dist && mkdir -p dist && cd build/ && bestzip ../dist/build.zip *",
+    "test": "node --test scripts/constants.test.mjs",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write --ignore-unknown \"{public,scripts,src}/**/*.{html,css,js,mjs,ts,json}\""
   },
