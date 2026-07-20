@@ -39,6 +39,12 @@ Load the unpacked extension from `build/` via `chrome://extensions` (Developer m
 
 ## Changelog
 
+### 1.1.0
+
+- **Site exclusions** — exempt specific subdomains or paths from broader monitored domains, including YouTube Music under `youtube.com`.
+- **Alert sounds** — choose an optional generated chime or alert pulse for interventions.
+- **Keyless releases** — publish through Chrome Web Store API v2 using GitHub OIDC and short-lived Google credentials.
+
 ### 1.0.7
 
 - **Customizable alert message** — set your own directive headline (e.g. "Touch Grass") in settings; it applies live to open tabs.
